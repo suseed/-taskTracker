@@ -1,183 +1,162 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <title>프로젝트 태스크·타임라인 트래커</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    *{box-sizing:border-box;}
-    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f4f7fa;color:#333;}
-    header{background:#4f6df5;color:#fff;padding:1rem;text-align:center;}
-    .container{max-width:980px;margin:2rem auto;background:#fff;padding:1.5rem;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.08);}  
-
-    /* ---------- 입력 폼 ---------- */
-    form{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.65rem;margin-bottom:1.3rem;align-items:end;}
-    form input{padding:.5rem;border:1px solid #ccc;border-radius:4px;}
-    form input[type="color"]{padding:0;height:40px;cursor:pointer;}
-    form button{padding:.55rem;border:none;border-radius:4px;background:#4f6df5;color:#fff;cursor:pointer;}
-    form button:hover{background:#374ec0;}
-
-    /* ---------- 필터 ---------- */
-    .filters{display:flex;gap:.5rem;justify-content:center;margin-bottom:1rem;flex-wrap:wrap;}
-    .filters button{padding:.3rem .9rem;border:1px solid #ccc;border-radius:20px;background:#fff;cursor:pointer;}
-    .filters button.active{background:#4f6df5;color:#fff;border-color:#4f6df5;}
-
-    /* ---------- 리스트 뷰 ---------- */
-    .task-list{list-style:none;padding:0;margin:0;}
-    .task{display:grid;grid-template-columns:auto 1fr auto auto auto auto auto;align-items:center;gap:.45rem;padding:.6rem .4rem;border-bottom:1px solid #eee;}
-    .task:last-child{border-bottom:none;}
-    .color-dot{width:14px;height:14px;border-radius:50%;flex-shrink:0;display:inline-block;}
-    .task label{display:flex;align-items:center;gap:.5rem;cursor:default;user-select:none;}
-    .dates{font-size:.8rem;color:#888;}
-    .task.done label span{ text-decoration:line-through; color:#999; }
-    .task.done .dates{ color:#bbb; }
-    .task button.action{border:none;background:#e5e5e5;color:#333;padding:.3rem .55rem;border-radius:4px;cursor:pointer;font-size:.78rem;}
-    .task button.action:hover{background:#d0d0d0;}
-    .task button.delete{background:#f9d7d7;color:#d33;}
-    .task button.delete:hover{background:#f2bcbc;}
-    .liColor{border:none;width:28px;height:24px;cursor:pointer;}
-
-    /* ---------- 타임라인 ---------- */
-    #timelineWrapper{overflow-x:auto;border:1px solid #ddd;border-radius:6px;margin-top:2rem;}
-    .timeline-grid{display:grid;position:relative;}
-    .timeline-month-header{background:#e7eaf2;font-weight:bold;font-size:.85rem;text-align:center;border-bottom:1px solid #ccc;white-space:nowrap;}
-    .timeline-day-header{background:#fafafa;font-size:.75rem;text-align:center;border-bottom:1px solid #ddd;white-space:nowrap;}
-    .timeline-row{border-bottom:1px solid #f1f1f1;min-height:34px;position:relative;}
-    .timeline-bar{color:#fff;font-size:.8rem;border-radius:4px;padding:.1rem .45rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;height:22px;display:flex;align-items:center;user-select:none;}
-
-    footer{text-align:center;font-size:.8rem;color:#aaa;margin-top:1.5rem;}
-    #actions{display:flex;gap:.6rem;justify-content:flex-end;margin-bottom:1rem;flex-wrap:wrap;}
-    #actions button{padding:.4rem .9rem;border:none;border-radius:4px;background:#4f6df5;color:#fff;cursor:pointer;}
-    #actions button:hover{background:#374ec0;}
-  </style>
+<meta charset="UTF-8">
+<title>간단 태스크 & Gantt 트래커</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:Arial,Helvetica,sans-serif;background:#f4f7fa;color:#333;line-height:1.4;}
+  header{background:#4f6df5;color:#fff;padding:1rem;text-align:center;}
+  .container{max-width:980px;margin:2rem auto;background:#fff;padding:1.5rem;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.08);}  
+  /* 입력 폼 */
+  #taskForm{display:grid;grid-template-columns:1fr 160px 160px 80px 90px;gap:.6rem;margin-bottom:1.4rem;}
+  #taskForm input, #taskForm button{padding:.5rem;border:1px solid #ccc;border-radius:4px;}
+  #taskForm input[type="color"]{padding:0;height:42px;cursor:pointer;border:none;}
+  #taskForm button{background:#4f6df5;color:#fff;border:none;cursor:pointer;}
+  #taskForm button:hover{background:#374ec0;}
+  /* 필터 */
+  .filters{display:flex;gap:.6rem;justify-content:center;margin-bottom:1rem;flex-wrap:wrap;}
+  .filters button{padding:.3rem .9rem;border:1px solid #ccc;border-radius:20px;background:#fff;cursor:pointer;}
+  .filters button.active{background:#4f6df5;color:#fff;border-color:#4f6df5;}
+  /* 리스트 */
+  .task-list{list-style:none;padding:0;margin:0;}
+  .task{display:grid;grid-template-columns:20px 1fr 140px 80px 28px repeat(3,60px);align-items:center;gap:.4rem;padding:.55rem .4rem;border-bottom:1px solid #eee;}
+  .task:last-child{border-bottom:none;}
+  .color-dot{width:14px;height:14px;border-radius:50%;display:inline-block;}
+  .task.done .title{text-decoration:line-through;color:#999;}
+  .task.done .dates{color:#bbb;}
+  .task button{font-size:.8rem;padding:.3rem .5rem;border:none;border-radius:4px;cursor:pointer;background:#e2e2e2;}
+  .task button:hover{background:#cfcfcf;}
+  .delete{background:#fad4d4;color:#d33;}
+  .delete:hover{background:#f2b2b2;}
+  /* 타임라인 */
+  #timelineWrapper{overflow-x:auto;border:1px solid #ddd;border-radius:6px;margin-top:2rem;}
+  .timeline-grid{display:grid;position:relative;}
+  .timeline-month-header{background:#eef0f8;font-weight:bold;font-size:.85rem;text-align:center;border-bottom:1px solid #ccc;white-space:nowrap;}
+  .timeline-day-header{background:#fafafa;font-size:.75rem;text-align:center;border-bottom:1px solid #ddd;white-space:nowrap;}
+  .timeline-row{border-bottom:1px solid #f1f1f1;min-height:34px;position:relative;}
+  .timeline-bar{color:#fff;font-size:.8rem;border-radius:4px;padding:.1rem .45rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;height:22px;display:flex;align-items:center;}
+  /* 액션 영역 */
+  #actions{display:flex;gap:.7rem;justify-content:flex-end;margin-bottom:1rem;flex-wrap:wrap;}
+  #actions button{padding:.4rem .9rem;border:none;border-radius:4px;background:#4f6df5;color:#fff;cursor:pointer;}
+  #actions button:hover{background:#374ec0;}
+  footer{text-align:center;font-size:.8rem;color:#aaa;margin-top:1.5rem;}
+</style>
 </head>
 <body>
-  <header><h1>프로젝트 태스크·타임라인 트래커</h1></header>
-  <div class="container">
-    <!-- 입력 폼 -->
-    <form id="taskForm">
-      <input type="text" id="taskTitle" placeholder="할 일을 입력하세요" required>
-      <input type="date" id="taskStart" title="시작일">
-      <input type="date" id="taskEnd" title="완료(마감)일">
-      <input type="color" id="taskColor" value="#4f6df5" title="색상 선택">
-      <button type="submit">추가</button>
-    </form>
+<header><h1>간단 태스크 & Gantt 트래커</h1></header>
+<div class="container">
+  <form id="taskForm">
+    <input type="text" id="title" placeholder="할 일을 입력하세요" required>
+    <input type="date" id="start">
+    <input type="date" id="end">
+    <input type="color" id="color" value="#4f6df5">
+    <button type="submit">추가</button>
+  </form>
 
-    <!-- 필터 -->
-    <div class="filters">
-      <button data-filter="all"       class="active">전체</button>
-      <button data-filter="pending"   >진행중</button>
-      <button data-filter="completed" >완료</button>
-    </div>
-
-    <!-- 추가 기능 -->
-    <div id="actions">
-      <button id="toggleView">월별 보기</button>
-      <button id="exportBtn">JSON 다운로드</button>
-      <label style="display:flex;align-items:center;gap:.4rem;cursor:pointer;">
-        JSON 불러오기
-        <input type="file" id="importFile" accept="application/json" style="display:none;">
-      </label>
-    </div>
-
-    <!-- 리스트 -->
-    <ul id="taskList" class="task-list"></ul>
-
-    <!-- 타임라인 -->
-    <h3 style="margin-top:2rem;">타임라인</h3>
-    <div id="timelineWrapper"><div id="timeline"></div></div>
+  <div class="filters">
+    <button data-filter="all" class="active">전체</button>
+    <button data-filter="pending">진행중</button>
+    <button data-filter="completed">완료</button>
   </div>
 
-  <footer>&copy; 2025 Task & Timeline Tracker</footer>
+  <div id="actions">
+    <button id="toggleView">월별 보기</button>
+    <button id="export">JSON 다운로드</button>
+    <label style="display:flex;align-items:center;gap:.4rem;cursor:pointer;">
+      JSON 불러오기
+      <input type="file" id="import" accept="application/json" style="display:none;">
+    </label>
+  </div>
+
+  <ul id="taskList" class="task-list"></ul>
+
+  <h3 style="margin-top:2rem;">타임라인</h3>
+  <div id="timelineWrapper"><div id="timeline"></div></div>
+</div>
+<footer>&copy; 2025 Task & Timeline Tracker</footer>
 
 <script>
-/*****************
- * 스토리지 체크 (CodePen 보호모드 대비)
- *****************/
-let storageOK=true;
-try{localStorage.setItem('__test','1');localStorage.removeItem('__test');}catch(e){storageOK=false;}
+/***** 헬퍼 *****/
+const qs = s => document.querySelector(s);
+const qsa = s => document.querySelectorAll(s);
 
-/*****************
- * 요소 캐싱
- *****************/
-const \$ = id=>document.getElementById(id);
-const taskForm=\$("taskForm"), taskTitle=\$("taskTitle"), taskStart=\$("taskStart"), taskEnd=\$("taskEnd"), taskColor=\$("taskColor"), taskList=\$("taskList"), timeline=\$("timeline"), toggleView=\$("toggleView"), exportBtn=\$("exportBtn"), importFile=\$("importFile");
-const filterBtns=document.querySelectorAll('.filters button');
+/***** 상태 *****/
+let tasks = JSON.parse(localStorage.getItem('tasks')||'[]');
+let filter = 'all';
+let monthView = false;
 
-/*****************
- * 상태
- *****************/
-let tasks=[];
-if(storageOK){
-  try{tasks=JSON.parse(localStorage.getItem('tasks'))||[];}catch{tasks=[];}
-}
-let currentFilter='all';
-let monthMode=false;
-function saveTasks(){if(!storageOK)return;localStorage.setItem('tasks',JSON.stringify(tasks));}
-
-/*****************
- * 렌더링 - 리스트
- *****************/
-function renderTasks(){
-  taskList.innerHTML='';
-  const filtered=tasks.filter(t=>currentFilter==='all'||(currentFilter==='pending'&&!t.done)||(currentFilter==='completed'&&t.done));
-  if(!filtered.length){taskList.innerHTML='<li style="text-align:center;color:#888;">태스크가 없습니다.</li>';}
-  filtered.sort((a,b)=>new Date(a.start||'9999-12-31')-new Date(b.start||'9999-12-31')).forEach(t=>{
-    const idx=tasks.indexOf(t);
+/***** 렌더링 함수 *****/
+function renderList(){
+  const ul = qs('#taskList');
+  ul.innerHTML='';
+  let data = tasks.filter(t => filter==='all'||(filter==='pending'&&!t.done)||(filter==='completed'&&t.done));
+  if(!data.length){ul.innerHTML='<li style="text-align:center;color:#888;padding:.8rem 0;">태스크가 없습니다.</li>'; renderTimeline(); return;}
+  data.sort((a,b)=> new Date(a.start||'9999-12-31') - new Date(b.start||'9999-12-31'));
+  data.forEach((t,i)=>{
     const li=document.createElement('li');
     li.className='task'+(t.done?' done':'');
-    li.innerHTML=`<label><span class="color-dot" style="background:${t.color}"></span><span>${t.title}</span></label>
+    li.innerHTML=`<span class="color-dot" style="background:${t.color}"></span>
+      <span class="title">${t.title}</span>
       <span class="dates">${t.start||''}${t.end?' → '+t.end:''}</span>
-      <input type="color" class="liColor" data-idx="${idx}" value="${t.color}">
-      <button class="action complete" data-idx="${idx}">${t.done?'↺':'✔'}</button>
-      <button class="action edit" data-idx="${idx}">✎</button>
-      <button class="action delete" data-idx="${idx}">✖</button>`;
-    taskList.appendChild(li);
+      <input type="color" value="${t.color}" data-idx="${i}" class="liColor">
+      <button data-idx="${i}" class="action complete">${t.done?'↺':'✔'}</button>
+      <button data-idx="${i}" class="action edit">✎</button>
+      <button data-idx="${i}" class="action delete delete">✖</button>`;
+    ul.appendChild(li);
   });
   renderTimeline();
 }
 
-/*****************
- * 렌더링 - 타임라인
- *****************/
 function renderTimeline(){
-  timeline.innerHTML='';
-  if(!tasks.length){timeline.innerHTML='<div style="text-align:center;padding:1rem;color:#888;">데이터가 없습니다.</div>';return;}
+  const wrap = qs('#timeline');
+  wrap.innerHTML='';
+  if(!tasks.length){wrap.innerHTML='<div style="text-align:center;padding:1rem;color:#888;">데이터가 없습니다.</div>';return;}
   const dayMS=86400000;
   let min=Infinity,max=-Infinity;
   tasks.forEach(t=>{const s=t.start?new Date(t.start).getTime():null;const e=t.end?new Date(t.end).getTime():null;if(s!==null)min=Math.min(min,s);if(e!==null)max=Math.max(max,e);if(s===null&&e!==null)min=Math.min(min,e);if(e===null&&s!==null)max=Math.max(max,s);});
-  if(!isFinite(min)||!isFinite(max)){timeline.innerHTML='<div style="text-align:center;padding:1rem;color:#888;">시작·종료일 입력된 태스크가 없습니다.</div>';return;}
+  if(!isFinite(min)||!isFinite(max)){wrap.innerHTML='<div style="text-align:center;padding:1rem;color:#888;">시작·종료일 입력된 태스크가 없습니다.</div>';return;}
   const days=Math.round((max-min)/dayMS)+1, cellW=70;
-  if(monthMode){const mh=document.createElement('div');mh.className='timeline-grid timeline-month-header';mh.style.gridTemplateColumns=`repeat(${days},${cellW}px)`;let cur=new Date(min);cur.setDate(1);while(cur.getTime()<=max){const startIdx=Math.round((cur-min)/dayMS);const next=new Date(cur.getFullYear(),cur.getMonth()+1,1);const endIdx=Math.min(days-1,Math.round((next.getTime()-1-min)/dayMS));const cell=document.createElement('div');cell.style.gridColumnStart=startIdx+1;cell.style.gridColumnEnd=endIdx+2;cell.textContent=`${cur.getFullYear()}-${String(cur.getMonth()+1).padStart(2,'0')}`;mh.appendChild(cell);cur=next;}timeline.appendChild(mh);}  
-  const dh=document.createElement('div');dh.className='timeline-grid timeline-day-header';dh.style.gridTemplateColumns=`repeat(${days},${cellW}px)`;for(let i=0;i<days;i++){const d=new Date(min+i*dayMS);const cell=document.createElement('div');cell.textContent=d.toISOString().slice(5,10);dh.appendChild(cell);}timeline.appendChild(dh);
-  tasks.forEach(t=>{const row=document.createElement('div');row.className='timeline-grid timeline-row';row.style.gridTemplateColumns=`repeat(${days},${cellW}px)`;const s=t.start?new Date(t.start).getTime():min;const e=t.end?new Date(t.end).getTime():s;const sIdx=Math.round((s-min)/dayMS);const eIdx=Math.round((e-min)/dayMS);const bar=document.createElement('div');bar.className='timeline-bar';bar.style.background=t.color;bar.style.gridColumnStart=sIdx+1;bar.style.gridColumnEnd=eIdx+2;bar.textContent=t.title;row.appendChild(bar);timeline.appendChild(row);});
+  if(monthView){const mh=document.createElement('div');mh.className='timeline-grid timeline-month-header';mh.style.gridTemplateColumns=`repeat(${days},${cellW}px)`;let cur=new Date(min);cur.setDate(1);while(cur<=max){const startIdx=Math.round((cur-min)/dayMS);const next=new Date(cur.getFullYear(),cur.getMonth()+1,1);const endIdx=Math.min(days-1,Math.round((next.getTime()-1-min)/dayMS));const div=document.createElement('div');div.style.gridColumnStart=startIdx+1;div.style.gridColumnEnd=endIdx+2;div.textContent=`${cur.getFullYear()}-${String(cur.getMonth()+1).padStart(2,'0')}`;mh.appendChild(div);cur=next;}wrap.appendChild(mh);}  
+  const dh=document.createElement('div');dh.className='timeline-grid timeline-day-header';dh.style.gridTemplateColumns=`repeat(${days},${cellW}px)`;for(let i=0;i<days;i++){const d=new Date(min+i*dayMS);const cell=document.createElement('div');cell.textContent=d.toISOString().slice(5,10);dh.appendChild(cell);}wrap.appendChild(dh);
+  tasks.forEach(t=>{const row=document.createElement('div');row.className='timeline-grid timeline-row';row.style.gridTemplateColumns=`repeat(${days},${cellW}px)`;const s=t.start?new Date(t.start).getTime():min;const e=t.end?new Date(t.end).getTime():s;const sIdx=Math.round((s-min)/dayMS);const eIdx=Math.round((e-min)/dayMS);const bar=document.createElement('div');bar.className='timeline-bar';bar.style.background=t.color;bar.style.gridColumnStart=sIdx+1;bar.style.gridColumnEnd=eIdx+2;bar.textContent=t.title;row.appendChild(bar);wrap.appendChild(row);});
 }
 
-/*****************
- * 이벤트: 폼 제출
- *****************/
-taskForm.addEventListener('submit',e=>{
+/***** 이벤트 핸들러 *****/
+qs('#taskForm').addEventListener('submit',e=>{
   e.preventDefault();
-  const title=taskTitle.value.trim();if(!title){alert('제목을 입력하세요');return;}
-  let start=taskStart.value,end=taskEnd.value;if(start&&end&&new Date(end)<new Date(start))[start,end]=[end,start];
-  tasks.push({title,start,startLabel:start,end,endLabel:end,done:false,color:taskColor.value});
-  taskTitle.value='';taskStart.value='';taskEnd.value='';
-  saveTasks();renderTasks();
+  const title=qs('#title').value.trim();if(!title)return alert('제목 입력');
+  let start=qs('#start').value,end=qs('#end').value;if(start&&end&&new Date(end)<new Date(start))[start,end]=[end,start];
+  tasks.push({title,start,end,done:false,color:qs('#color').value});
+  localStorage.setItem('tasks',JSON.stringify(tasks));
+  e.target.reset();qs('#color').value='#4f6df5';
+  renderList();
 });
 
-/*****************
- * 이벤트: 리스트 내부 (위임)
- *****************/
+qsa('.filters button').forEach(btn=>btn.addEventListener('click',()=>{qsa('.filters button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');filter=btn.dataset.filter;renderList();}));
+
 taskList.addEventListener('click',e=>{
   const idx=e.target.dataset.idx;if(idx===undefined)return;
-  if(e.target.classList.contains('delete')){tasks.splice(idx,1);saveTasks();renderTasks();return;}
-  if(e.target.classList.contains('complete')){tasks[idx].done=!tasks[idx].done;saveTasks();renderTasks();return;}
-  if(e.target.classList.contains('edit')){const nt=prompt('새 제목을 입력하세요',tasks[idx].title);if(nt){tasks[idx].title=nt.trim();saveTasks();renderTasks();}return;}
+  const t=tasks[idx];
+  if(e.target.classList.contains('delete')){tasks.splice(idx,1);}  
+  else if(e.target.classList.contains('complete')){t.done=!t.done;}  
+  else if(e.target.classList.contains('edit')){const nt=prompt('새 제목',t.title);if(nt)t.title=nt.trim();}
+  else return;
+  localStorage.setItem('tasks',JSON.stringify(tasks));
+  renderList();
 });
 
-taskList.addEventListener('change',e=>{if(e.target.classList.contains('liColor')){const idx=e.target.dataset.idx;tasks[idx].color=e.target.value;saveTasks();renderTasks();}});
+taskList.addEventListener('change',e=>{if(e.target.classList.contains('liColor')){const idx=e.target.dataset.idx;tasks[idx].color=e.target.value;localStorage.setItem('tasks',JSON.stringify(tasks));renderList();}});
 
-/*****************
- * 기타 버튼
- *****************/
-filterBtns.forEach(btn=>btn.addEventListener('click',()=>{filterBtns.forEach(b=>b.classList.remove('active'));btn.classList.add('active');currentFilter=btn.dataset.filter;renderTasks();}));(btn=>btn.addEventListener('click',()=>{filterBtns.forEach(b=>b.classList.remove('
+qs('#toggleView').addEventListener('click',()=>{monthView=!monthView;qs('#toggleView').textContent=monthView?'전체 보기':'월별 보기';renderTimeline();});
+
+qs('#export').addEventListener('click',()=>{const blob=new Blob([JSON.stringify(tasks,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='tasks.json';a.click();URL.revokeObjectURL(url);});
+
+qs('#import').addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const reader=new FileReader();reader.onload=ev=>{try{const arr=JSON.parse(ev.target.result);if(Array.isArray(arr)){tasks=arr;localStorage.setItem('tasks',ev.target.result);renderList();}else alert('JSON 오류');}catch{alert('파싱 오류');}};reader.readAsText(f);});
+
+/***** 초기 호출 *****/
+renderList();
+</script>
+</body>
+</html>
