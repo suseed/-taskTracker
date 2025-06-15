@@ -2,141 +2,112 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>간단 태스크 & Gantt 트래커</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Task Tracker</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-  *{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:Arial,Helvetica,sans-serif;background:#f4f7fa;color:#333;line-height:1.4;}
-  header{background:#4f6df5;color:#fff;padding:1rem;text-align:center;}
-  .container{max-width:980px;margin:2rem auto;background:#fff;padding:1.5rem;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.08);}  
-  /* 입력 폼 */
-  #taskForm{display:grid;grid-template-columns:1fr 160px 160px 80px 90px;gap:.65rem;margin-bottom:1.4rem;}
-  #taskForm input,#taskForm button{padding:.5rem;border:1px solid #ccc;border-radius:4px;}
-  #taskForm input[type="color"]{padding:0;height:42px;border:none;cursor:pointer;}
-  #taskForm button{background:#4f6df5;color:#fff;border:none;cursor:pointer;}
-  #taskForm button:hover{background:#374ec0;}
-  /* 필터 */
-  .filters{display:flex;gap:.6rem;justify-content:center;margin-bottom:1rem;flex-wrap:wrap;}
-  .filters button{padding:.3rem .9rem;border:1px solid #ccc;border-radius:20px;background:#fff;cursor:pointer;}
-  .filters button.active{background:#4f6df5;color:#fff;border-color:#4f6df5;}
+  *{box-sizing:border-box;margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;}
+  body{background:#f5f6fa;color:#333;line-height:1.5;}
+  header{background:#4f6df5;color:#fff;text-align:center;padding:1rem;}
+  .container{max-width:900px;margin:2rem auto;background:#fff;padding:1.2rem;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.1);}  
+  /* 입력 */
+  #form{display:flex;flex-wrap:wrap;gap:.6rem;margin-bottom:1.2rem;}
+  #form input,#form button{padding:.55rem;border:1px solid #ccc;border-radius:4px;}
+  #form input[type="color"]{padding:0;border:none;width:50px;height:42px;cursor:pointer;}
+  #form button{background:#4f6df5;color:#fff;border:none;cursor:pointer;}
+  #form button:hover{background:#374ec0;}
   /* 리스트 */
-  .task-list{list-style:none;padding:0;margin:0;}
-  .task{display:grid;grid-template-columns:20px 1fr 140px 80px 28px repeat(3,60px);align-items:center;gap:.4rem;padding:.55rem .4rem;border-bottom:1px solid #eee;}
-  .task:last-child{border-bottom:none;}
-  .color-dot{width:14px;height:14px;border-radius:50%;display:inline-block;}
-  .task.done .title{text-decoration:line-through;color:#999;}
-  .task.done .dates{color:#bbb;}
-  .task button{font-size:.8rem;padding:.3rem .5rem;border:none;border-radius:4px;cursor:pointer;background:#e2e2e2;}
-  .task button:hover{background:#cfcfcf;}
-  .delete{background:#fad4d4;color:#d33;}
-  .delete:hover{background:#f2b2b2;}
+  ul{list-style:none;padding:0;margin:0;}
+  li.task{display:grid;grid-template-columns:auto 1fr auto auto auto;gap:.5rem;align-items:center;padding:.55rem .4rem;border-bottom:1px solid #eee;}
+  li.task:last-child{border-bottom:none;}
+  .dot{width:14px;height:14px;border-radius:50%;display:inline-block;}
+  .dates{font-size:.8rem;color:#777;}
+  .done .title{text-decoration:line-through;color:#999;}
+  .done .dates{color:#bbb;}
+  button.small{font-size:.8rem;padding:.35rem .5rem;border:none;border-radius:4px;background:#e1e1e1;cursor:pointer;}
+  button.small:hover{background:#ccc;}
+  button.del{background:#f8d2d2;color:#d33;}
+  button.del:hover{background:#efb5b5;}
   /* 타임라인 */
-  #timelineWrapper{overflow-x:auto;border:1px solid #ddd;border-radius:6px;margin-top:2rem;}
-  .timeline-grid{display:grid;position:relative;}
-  .timeline-month-header{background:#eef0f8;font-weight:bold;font-size:.85rem;text-align:center;border-bottom:1px solid #ccc;white-space:nowrap;}
-  .timeline-day-header{background:#fafafa;font-size:.75rem;text-align:center;border-bottom:1px solid #ddd;white-space:nowrap;}
-  .timeline-row{border-bottom:1px solid #f1f1f1;min-height:34px;position:relative;}
-  .timeline-bar{color:#fff;font-size:.8rem;border-radius:4px;padding:.1rem .45rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;height:22px;display:flex;align-items:center;}
-  /* 액션 영역 */
-  #actions{display:flex;gap:.7rem;justify-content:flex-end;margin-bottom:1rem;flex-wrap:wrap;}
-  #actions button{padding:.4rem .9rem;border:none;border-radius:4px;background:#4f6df5;color:#fff;cursor:pointer;}
-  #actions button:hover{background:#374ec0;}
-  footer{text-align:center;font-size:.8rem;color:#aaa;margin-top:1.5rem;}
+  #timelineWrap{overflow-x:auto;margin-top:2rem;border:1px solid #ddd;border-radius:6px;}
+  .grid{display:grid;position:relative;}
+  .dayHead{background:#fafafa;font-size:.75rem;text-align:center;border-bottom:1px solid #ddd;}
+  .row{border-bottom:1px solid #f1f1f1;min-height:34px;}
+  .bar{background:#4f6df5;color:#fff;font-size:.8rem;border-radius:4px;padding:.1rem .45rem;white-space:nowrap;height:22px;display:flex;align-items:center;}
+  footer{text-align:center;padding:1rem;font-size:.8rem;color:#888;}
 </style>
 </head>
 <body>
-<header><h1>간단 태스크 &amp; Gantt 트래커</h1></header>
+<header><h1>Task Tracker</h1></header>
 <div class="container">
-  <form id="taskForm">
-    <input type="text" id="title" placeholder="할 일을 입력하세요" required>
+  <form id="form">
+    <input type="text" id="title" placeholder="할 일" style="flex:1" required>
     <input type="date" id="start">
     <input type="date" id="end">
     <input type="color" id="color" value="#4f6df5">
     <button type="submit">추가</button>
   </form>
 
-  <div class="filters">
-    <button data-filter="all" class="active">전체</button>
-    <button data-filter="pending">진행중</button>
-    <button data-filter="completed">완료</button>
-  </div>
+  <ul id="list"></ul>
 
-  <div id="actions">
-    <button id="toggleView">월별 보기</button>
-    <button id="export">JSON 다운로드</button>
-    <label style="display:flex;align-items:center;gap:.4rem;cursor:pointer;">
-      JSON 불러오기 <input type="file" id="import" accept="application/json" style="display:none;">
-    </label>
-  </div>
-
-  <ul id="taskList" class="task-list"></ul>
-
-  <h3 style="margin-top:2rem;">타임라인</h3>
-  <div id="timelineWrapper"><div id="timeline"></div></div>
+  <h3 style="margin-top:2rem">타임라인</h3>
+  <div id="timelineWrap"><div id="timeline"></div></div>
 </div>
-<footer>&copy; 2025 Task &amp; Timeline Tracker</footer>
+<footer>&copy; 2025</footer>
 
 <script>
-/***** 헬퍼 *****/
-const qs=s=>document.querySelector(s);
-const qsa=s=>document.querySelectorAll(s);
+const form=document.getElementById('form');
+const titleInput=document.getElementById('title');
+const startInput=document.getElementById('start');
+const endInput=document.getElementById('end');
+const colorInput=document.getElementById('color');
+const list=document.getElementById('list');
+const timeline=document.getElementById('timeline');
 
-/***** 상태 *****/
 let tasks=JSON.parse(localStorage.getItem('tasks')||'[]');
-let filter='all';
-let monthView=false;
+
 function save(){localStorage.setItem('tasks',JSON.stringify(tasks));}
 
-/***** 렌더링 *****/
-function renderList(){
-  const ul=qs('#taskList');ul.innerHTML='';
-  const data=tasks.filter(t=>filter==='all'||(filter==='pending'&&!t.done)||(filter==='completed'&&t.done));
-  if(!data.length){ul.innerHTML='<li style="text-align:center;color:#888;padding:.8rem 0;">태스크가 없습니다.</li>';renderTimeline();return;}
-  data.sort((a,b)=>new Date(a.start||'9999-12-31')-new Date(b.start||'9999-12-31'));
-  data.forEach(t=>{
-    const idx=tasks.indexOf(t);
+function render(){
+  /* 리스트 */
+  list.innerHTML='';
+  if(tasks.length===0){list.innerHTML='<li style="text-align:center;color:#888;padding:.8rem 0;">태스크 없음</li>';timeline.innerHTML='';return;}
+  tasks.sort((a,b)=>new Date(a.start||'9999-12-31')-new Date(b.start||'9999-12-31'));
+  tasks.forEach((t,i)=>{
     const li=document.createElement('li');li.className='task'+(t.done?' done':'');
-    li.innerHTML=`<span class="color-dot" style="background:${t.color}"></span>
+    li.innerHTML=`<span class="dot" style="background:${t.color}"></span>
       <span class="title">${t.title}</span>
       <span class="dates">${t.start||''}${t.end?' → '+t.end:''}</span>
-      <input type="color" value="${t.color}" data-idx="${idx}" class="liColor">
-      <button class="action complete" data-idx="${idx}">${t.done?'↺':'✔'}</button>
-      <button class="action edit" data-idx="${idx}">✎</button>
-      <button class="action delete delete" data-idx="${idx}">✖</button>`;
-    ul.appendChild(li);
+      <button class="small doneBtn" data-i="${i}">${t.done?'↺':'✔'}</button>
+      <button class="small del" data-i="${i}">✖</button>`;
+    list.appendChild(li);
   });
-  renderTimeline();
-}
-function renderTimeline(){
-  const wrap=qs('#timeline');wrap.innerHTML='';
-  if(!tasks.length){wrap.innerHTML='<div style="text-align:center;padding:1rem;color:#888;">데이터가 없습니다.</div>';return;}
-  const dayMS=86400000;let min=Infinity,max=-Infinity;
+  /* 타임라인 */
+  timeline.innerHTML='';
+  const dayMS=86400000;
+  let min=Infinity,max=-Infinity;
   tasks.forEach(t=>{const s=t.start?Date.parse(t.start):null;const e=t.end?Date.parse(t.end):null;if(s!==null)min=Math.min(min,s);if(e!==null)max=Math.max(max,e);if(s===null&&e!==null)min=Math.min(min,e);if(e===null&&s!==null)max=Math.max(max,s);});
-  if(!isFinite(min)||!isFinite(max)){wrap.innerHTML='<div style="text-align:center;padding:1rem;color:#888;">시작·종료일 입력된 태스크가 없습니다.</div>';return;}
-  const days=Math.round((max-min)/dayMS)+1,cellW=70;
-  if(monthView){const mh=document.createElement('div');mh.className='timeline-grid timeline-month-header';mh.style.gridTemplateColumns=`repeat(${days},${cellW}px)`;let cur=new Date(min);cur.setDate(1);while(cur<=max){const sIdx=Math.round((cur-min)/dayMS);const next=new Date(cur.getFullYear(),cur.getMonth()+1,1);const eIdx=Math.min(days-1,Math.round((next.getTime()-1-min)/dayMS));const div=document.createElement('div');div.style.gridColumnStart=sIdx+1;div.style.gridColumnEnd=eIdx+2;div.textContent=`${cur.getFullYear()}-${String(cur.getMonth()+1).padStart(2,'0')}`;mh.appendChild(div);cur=next;}wrap.appendChild(mh);}  
-  const dh=document.createElement('div');dh.className='timeline-grid timeline-day-header';dh.style.gridTemplateColumns=`repeat(${days},${cellW}px)`;for(let i=0;i<days;i++){const d=new Date(min+i*dayMS);const cell=document.createElement('div');cell.textContent=d.toISOString().slice(5,10);dh.appendChild(cell);}wrap.appendChild(dh);
-  tasks.forEach(t=>{const row=document.createElement('div');row.className='timeline-grid timeline-row';row.style.gridTemplateColumns=`repeat(${days},${cellW}px)`;const s=t.start?Date.parse(t.start):min;const e=t.end?Date.parse(t.end):s;const sIdx=Math.round((s-min)/dayMS);const eIdx=Math.round((e-min)/dayMS);const bar=document.createElement('div');bar.className='timeline-bar';bar.style.background=t.color;bar.style.gridColumnStart=sIdx+1;bar.style.gridColumnEnd=eIdx+2;bar.textContent=t.title;row.appendChild(bar);wrap.appendChild(row);});
+  if(!isFinite(min)||!isFinite(max)){return;}
+  const days=Math.round((max-min)/dayMS)+1,cellW=60;
+  const header=document.createElement('div');header.className='grid dayHead';header.style.gridTemplateColumns=`repeat(${days},${cellW}px)`;
+  for(let i=0;i<days;i++){const d=new Date(min+i*dayMS);const cell=document.createElement('div');cell.textContent=d.getDate();header.appendChild(cell);}timeline.appendChild(header);
+  tasks.forEach(t=>{const row=document.createElement('div');row.className='grid row';row.style.gridTemplateColumns=`repeat(${days},${cellW}px)`;const s=t.start?Date.parse(t.start):min;const e=t.end?Date.parse(t.end):s;const sIdx=Math.round((s-min)/dayMS);const eIdx=Math.round((e-min)/dayMS);const bar=document.createElement('div');bar.className='bar';bar.style.background=t.color;bar.style.gridColumnStart=sIdx+1;bar.style.gridColumnEnd=eIdx+2;bar.textContent=t.title;row.appendChild(bar);timeline.appendChild(row);});
 }
 
-/***** 이벤트 *****/
-qs('#taskForm').addEventListener('submit',e=>{
-  e.preventDefault();const title=qs('#title').value.trim();if(!title)return alert('제목 입력');let start=qs('#start').value,end=qs('#end').value;if(start&&end&&new Date(end)<new Date(start))[start,end]=[end,start];tasks.push({title,start,end,done:false,color:qs('#color').value});save();e.target.reset();qs('#color').value='#4f6df5';renderList();
+form.addEventListener('submit',e=>{
+  e.preventDefault();
+  const title=titleInput.value.trim();if(!title){alert('제목 입력');return;}
+  let start=startInput.value,end=endInput.value;if(start&&end&&new Date(end)<new Date(start))[start,end]=[end,start];
+  tasks.push({title,start,end,color:colorInput.value,done:false});
+  save();titleInput.value='';startInput.value='';endInput.value='';colorInput.value='#4f6df5';render();
 });
-qsa('.filters button').forEach(btn=>btn.addEventListener('click',()=>{qsa('.filters button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');filter=btn.dataset.filter;renderList();}));
-qs('#taskList').addEventListener('click',e=>{
-  const idx=e.target.dataset.idx;if(idx===undefined)return;const t=tasks[idx];
-  if(e.target.classList.contains('delete')){tasks.splice(idx,1);}  
-  else if(e.target.classList.contains('complete')){t.done=!t.done;}  
-  else if(e.target.classList.contains('edit')){
-    const nt=prompt('제목',t.title)||t.title;
-    const ns=prompt('시작일 YYYY-MM-DD',t.start)||t.start;
-    const ne=prompt('종료일 YYYY-MM-DD',t.end)||t.end;
-    const nc=prompt('색상 #RRGGBB',t.color)||t.color;
-    t.title=nt.trim();t.start=ns.trim();t.end=ne.trim();t.color=nc.trim();
-  }else{return;}
-  save();renderList();
+
+list.addEventListener('click',e=>{
+  const idx=e.target.dataset.i;if(idx===undefined)return;
+  if(e.target.classList.contains('del')){tasks.splice(idx,1);}else if(e.target.classList.contains('doneBtn')){tasks[idx].done=!tasks[idx].done;}
+  save();render();
 });
-qs('#taskList').addEventListener('change',e=>{if(e.target.classList.contains('liColor')){tasks[e.target.dataset.idx].color=e.target.value;save();renderList();}});
-qs('#toggleView').addEventListener('click',()=>{monthView=!monthView;qs('#toggleView').textContent=monthView?'전체 보기':'월별 보기';renderTimeline();});
-qs('#export').addEventListener('click',()=>{const blob=new Blob([JSON.stringify(tasks,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='tasks.json';a.click();URL.revokeObjectURL(url);});const url=URL.createObjectURL(blob);const a=document.createElement('
+
+render();
+</script>
+</body>
+</html>
