@@ -1,54 +1,58 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <title>프로젝트 태스크‧타임라인 트래커</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    *{box-sizing:border-box;}
-    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f4f7fa;color:#333;}
-    header{background:#4f6df5;color:#fff;padding:1rem;text-align:center;}
-    .container{max-width:960px;margin:2rem auto;background:#fff;padding:1.5rem;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.08);}  
-    form{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.6rem;margin-bottom:1.3rem;align-items:end;}  
-    form input{padding:.5rem;border:1px solid #ccc;border-radius:4px;}
-    form button{padding:.55rem;border:none;border-radius:4px;background:#4f6df5;color:#fff;cursor:pointer;}
-    form button:hover{background:#374ec0;}
+<meta charset="UTF-8">
+<title>프로젝트 태스크·타임라인 트래커</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f4f7fa;color:#333;}
+  header{background:#4f6df5;color:#fff;padding:1rem;text-align:center;}
+  .container{max-width:980px;margin:2rem auto;background:#fff;padding:1.5rem;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.08);}  
+  form{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.65rem;margin-bottom:1.3rem;align-items:end;}  
+  form input{padding:.5rem;border:1px solid #ccc;border-radius:4px;}
+  form input[type="color"]{padding:0;height:40px;}
+  form button{padding:.55rem;border:none;border-radius:4px;background:#4f6df5;color:#fff;cursor:pointer;}
+  form button:hover{background:#374ec0;}
 
-    .filters{display:flex;gap:.5rem;justify-content:center;margin-bottom:1rem;flex-wrap:wrap;}
-    .filters button{padding:.3rem .9rem;border:1px solid #ccc;border-radius:20px;background:#fff;cursor:pointer;}
-    .filters button.active{background:#4f6df5;color:#fff;border-color:#4f6df5;}
+  .filters{display:flex;gap:.5rem;justify-content:center;margin-bottom:1rem;flex-wrap:wrap;}
+  .filters button{padding:.3rem .9rem;border:1px solid #ccc;border-radius:20px;background:#fff;cursor:pointer;}
+  .filters button.active{background:#4f6df5;color:#fff;border-color:#4f6df5;}
 
-    /* list view */
-    .task-list{list-style:none;padding:0;margin:0;}
-    .task{display:flex;align-items:center;justify-content:space-between;padding:.7rem .4rem;border-bottom:1px solid #eee;gap:.4rem;}
-    .task:last-child{border-bottom:none;}
-    .task label{flex:1;display:flex;align-items:center;gap:.5rem;cursor:pointer;}
-    .task .dates{font-size:.8rem;color:#888;display:flex;gap:.4rem;}
-    .task.done label span{text-decoration:line-through;color:#999;}
-    .task.done .dates{color:#bbb;}
-    .task button.delete{background:none;border:none;color:#d33;font-size:1.15rem;cursor:pointer;}
+  /* list view */
+  .task-list{list-style:none;padding:0;margin:0;}
+  .task{display:grid;grid-template-columns:auto 1fr auto auto;align-items:center;gap:.4rem;padding:.65rem .4rem;border-bottom:1px solid #eee;}
+  .task:last-child{border-bottom:none;}
+  .color-dot{width:14px;height:14px;border-radius:50%;flex-shrink:0;display:inline-block;}
+  .task label{display:flex;align-items:center;gap:.5rem;cursor:pointer;}
+  .task .dates{font-size:.8rem;color:#888;}
+  .task.done label span{text-decoration:line-through;color:#999;}
+  .task.done .dates{color:#bbb;}
+  .task button.delete{background:none;border:none;color:#d33;font-size:1.13rem;cursor:pointer;}
+  .liColor{border:none;width:28px;height:24px;cursor:pointer;}
 
-    /* timeline */
-    #timelineWrapper{overflow-x:auto;border:1px solid #ddd;border-radius:6px;margin-top:2rem;}
-    .timeline-grid{display:grid;border-bottom:1px solid #ddd;position:relative;}
-    .timeline-header{background:#fafafa;font-size:.8rem;text-align:center;border-bottom:1px solid #ddd;white-space:nowrap;}
-    .timeline-row{border-bottom:1px solid #f1f1f1;min-height:34px;position:relative;}
-    .timeline-bar{background:#4f6df5;color:#fff;font-size:.8rem;border-radius:4px;padding:.1rem .45rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;height:22px;display:flex;align-items:center;user-select:none;}
+  /* timeline */
+  #timelineWrapper{overflow-x:auto;border:1px solid #ddd;border-radius:6px;margin-top:2rem;}
+  .timeline-grid{display:grid;position:relative;}
+  .timeline-month-header{background:#e7eaf2;font-weight:bold;font-size:.85rem;text-align:center;border-bottom:1px solid #ccc;white-space:nowrap;}
+  .timeline-day-header{background:#fafafa;font-size:.75rem;text-align:center;border-bottom:1px solid #ddd;white-space:nowrap;}
+  .timeline-row{border-bottom:1px solid #f1f1f1;min-height:34px;position:relative;}
+  .timeline-bar{color:#fff;font-size:.8rem;border-radius:4px;padding:.1rem .45rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;height:22px;display:flex;align-items:center;user-select:none;}
 
-    footer{text-align:center;font-size:.8rem;color:#aaa;margin-top:1.5rem;}
-    #actions{display:flex;gap:.6rem;justify-content:flex-end;margin-bottom:1rem;flex-wrap:wrap;}
-    #actions button{padding:.4rem .9rem;border:none;border-radius:4px;background:#4f6df5;color:#fff;cursor:pointer;}
-  </style>
+  footer{text-align:center;font-size:.8rem;color:#aaa;margin-top:1.5rem;}
+  #actions{display:flex;gap:.6rem;justify-content:flex-end;margin-bottom:1rem;flex-wrap:wrap;}
+  #actions button{padding:.4rem .9rem;border:none;border-radius:4px;background:#4f6df5;color:#fff;cursor:pointer;}
+</style>
 </head>
 <body>
   <header><h1>프로젝트 태스크·타임라인 트래커</h1></header>
-
   <div class="container">
     <!-- 입력 폼 -->
     <form id="taskForm">
       <input type="text" id="taskTitle" placeholder="할 일을 입력하세요" required>
       <input type="date" id="taskStart" title="시작일">
       <input type="date" id="taskEnd" title="완료(마감)일">
+      <input type="color" id="taskColor" value="#4f6df5" title="색상 선택">
       <button type="submit">추가</button>
     </form>
 
@@ -61,6 +65,7 @@
 
     <!-- 추가 기능 -->
     <div id="actions">
+      <button id="toggleView">월별 보기</button>
       <button id="exportBtn">JSON 다운로드</button>
       <label style="display:flex;align-items:center;gap:.4rem;cursor:pointer;">
         JSON 불러오기
@@ -72,154 +77,165 @@
     <ul id="taskList" class="task-list"></ul>
 
     <!-- 타임라인 뷰 -->
-    <h3 style="margin-top:2.2rem;">타임라인</h3>
+    <h3 style="margin-top:2rem;">타임라인</h3>
     <div id="timelineWrapper"><div id="timeline"></div></div>
   </div>
 
   <footer>&copy; 2025 Task & Timeline Tracker</footer>
 
-  <script>
-    // ------------ 요소 캐싱 ------------
-    const taskForm   = document.getElementById('taskForm');
-    const taskTitle  = document.getElementById('taskTitle');
-    const taskStart  = document.getElementById('taskStart');
-    const taskEnd    = document.getElementById('taskEnd');
-    const taskList   = document.getElementById('taskList');
-    const filterBtns = document.querySelectorAll('.filters button');
-    const timeline   = document.getElementById('timeline');
-    const exportBtn  = document.getElementById('exportBtn');
-    const importFile = document.getElementById('importFile');
+<script>
+// ------------ 요소 캐싱 ------------
+const taskForm   = document.getElementById('taskForm');
+const taskTitle  = document.getElementById('taskTitle');
+const taskStart  = document.getElementById('taskStart');
+const taskEnd    = document.getElementById('taskEnd');
+const taskColor  = document.getElementById('taskColor');
+const taskList   = document.getElementById('taskList');
+const filterBtns = document.querySelectorAll('.filters button');
+const timeline   = document.getElementById('timeline');
+const exportBtn  = document.getElementById('exportBtn');
+const importFile = document.getElementById('importFile');
+const toggleView = document.getElementById('toggleView');
 
-    // ------------ 상태 ------------
-    let tasks = JSON.parse(localStorage.getItem('tasks')||'[]');
-    let currentFilter = 'all';
+// ------------ 상태 ------------
+let tasks = JSON.parse(localStorage.getItem('tasks')||'[]');
+let currentFilter = 'all';
+let monthMode = false; // 월별 보기 토글
 
-    function saveTasks(){localStorage.setItem('tasks',JSON.stringify(tasks));}
+function saveTasks(){localStorage.setItem('tasks',JSON.stringify(tasks));}
 
-    // -------- 리스트 렌더링 --------
-    function renderTasks(){
-      taskList.innerHTML='';
-      const filtered = tasks.filter(t=>{
-        if(currentFilter==='pending') return !t.done;
-        if(currentFilter==='completed') return t.done;
-        return true;
-      });
-      if(filtered.length===0){taskList.innerHTML='<li style="text-align:center;color:#888;">태스크가 없습니다.</li>';}
-      filtered.sort((a,b)=>new Date(a.start||'9999-12-31')-new Date(b.start||'9999-12-31'))
-        .forEach((t,i)=>{
-          const li=document.createElement('li');
-          li.className='task'+(t.done?' done':'');
-          li.innerHTML=`<label><input type="checkbox" data-index="${i}" ${t.done?'checked':''}><span>${t.title}</span></label>
-                         <span class="dates">${t.start||''}${(t.end||'')?(' → '+(t.end||'')) : ''}</span>
-                         <button class="delete" data-index="${i}" aria-label="삭제">&times;</button>`;
-          taskList.appendChild(li);
-        });
-      renderTimeline();
+// -------- 리스트 렌더링 --------
+function renderTasks(){
+  taskList.innerHTML='';
+  const filtered = tasks.filter(t=>{
+    if(currentFilter==='pending') return !t.done;
+    if(currentFilter==='completed') return t.done;
+    return true;
+  });
+  if(filtered.length===0){taskList.innerHTML='<li style="text-align:center;color:#888;">태스크가 없습니다.</li>';}
+  filtered.sort((a,b)=>new Date(a.start||'9999-12-31') - new Date(b.start||'9999-12-31'))
+    .forEach((t,i)=>{
+      const li=document.createElement('li');
+      li.className='task'+(t.done?' done':'');
+      li.innerHTML=`
+        <label>
+          <input type="checkbox" data-index="${i}" ${t.done?'checked':''}>
+          <span class="color-dot" style="background:${t.color||'#4f6df5'}"></span>
+          <span>${t.title}</span>
+        </label>
+        <span class="dates">${t.start||''}${(t.end||'')?(' → '+(t.end||'')) : ''}</span>
+        <input type="color" class="liColor" data-index="${i}" value="${t.color||'#4f6df5'}" title="색상 변경">
+        <button class="delete" data-index="${i}" aria-label="삭제">&times;</button>`;
+      taskList.appendChild(li);
+    });
+  renderTimeline();
+}
+
+// -------- 타임라인 렌더링 --------
+function renderTimeline(){
+  timeline.innerHTML='';
+  if(tasks.length===0){timeline.innerHTML='<div style="text-align:center;padding:1rem;color:#888;">데이터가 없습니다.</div>';return;}
+
+  // 날짜 범위 계산
+  const dayMS=86400000;
+  let minTime=Infinity, maxTime=-Infinity;
+  tasks.forEach(t=>{
+    const s=t.start?new Date(t.start).getTime():null;
+    const e=t.end?new Date(t.end).getTime():null;
+    if(s!==null) minTime=Math.min(minTime,s);
+    if(e!==null) maxTime=Math.max(maxTime,e);
+    if(s===null && e!==null) minTime=Math.min(minTime,e);
+    if(e===null && s!==null) maxTime=Math.max(maxTime,s);
+  });
+  if(!isFinite(minTime)||!isFinite(maxTime)){timeline.innerHTML='<div style="text-align:center;padding:1rem;color:#888;">시작·종료일 입력된 태스크가 없습니다.</div>';return;}
+
+  const days=Math.round((maxTime-minTime)/dayMS)+1;
+  const cellW=70; // px per day
+
+  // ----- 월 헤더 -----
+  if(monthMode){
+    const monthHeader=document.createElement('div');
+    monthHeader.className='timeline-grid timeline-month-header';
+    monthHeader.style.gridTemplateColumns=`repeat(${days},${cellW}px)`;
+    let cur=new Date(minTime);cur.setHours(0,0,0,0);cur.setDate(1);
+    while(cur.getTime()<=maxTime){
+      const monthStartIdx=Math.round((cur.getTime()-minTime)/dayMS);
+      let next=new Date(cur.getFullYear(),cur.getMonth()+1,1);
+      const monthEndIdx=Math.min(days-1,Math.round((next.getTime()-1-minTime)/dayMS));
+      const cell=document.createElement('div');
+      cell.style.gridColumnStart=monthStartIdx+1;
+      cell.style.gridColumnEnd=monthEndIdx+2;
+      cell.textContent=`${cur.getFullYear()}-${String(cur.getMonth()+1).padStart(2,'0')}`;
+      monthHeader.appendChild(cell);
+      cur=next;
     }
+    timeline.appendChild(monthHeader);
+  }
 
-    // -------- 타임라인 렌더링 --------
-    function renderTimeline(){
-      timeline.innerHTML='';
-      if(tasks.length===0){timeline.innerHTML='<div style="text-align:center;padding:1rem;color:#888;">데이터가 없습니다.</div>';return;}
+  // ----- 일 헤더 -----
+  const dayHeader=document.createElement('div');
+  dayHeader.className='timeline-grid timeline-day-header';
+  dayHeader.style.gridTemplateColumns=`repeat(${days},${cellW}px)`;
+  for(let i=0;i<days;i++){
+    const date=new Date(minTime+i*dayMS);
+    const cell=document.createElement('div');
+    cell.textContent=date.toISOString().slice(5,10);
+    dayHeader.appendChild(cell);
+  }
+  timeline.appendChild(dayHeader);
 
-      const dayMS=86400000;
-      let minTime=Infinity, maxTime=-Infinity;
-      tasks.forEach(t=>{
-        const s=t.start?new Date(t.start).getTime():null;
-        const e=t.end?new Date(t.end).getTime():null;
-        if(s!==null) minTime=Math.min(minTime,s);
-        if(e!==null) maxTime=Math.max(maxTime,e);
-        if(s===null && e!==null) minTime=Math.min(minTime,e); // start 없이 end만 있을 경우
-        if(e===null && s!==null) maxTime=Math.max(maxTime,s); // end 없이 start만 있을 경우
-      });
-      if(!isFinite(minTime)||!isFinite(maxTime)){timeline.innerHTML='<div style="text-align:center;padding:1rem;color:#888;">시작·종료일 입력된 태스크가 없습니다.</div>';return;}
+  // ----- 벨트(태스크) -----
+  tasks.forEach(t=>{
+    const row=document.createElement('div');
+    row.className='timeline-grid timeline-row';
+    row.style.gridTemplateColumns=`repeat(${days},${cellW}px)`;
 
-      const days=Math.round((maxTime-minTime)/dayMS)+1;
-      const cellW=80; // px per day
+    const startTime=t.start?new Date(t.start).getTime():minTime;
+    const endTime=t.end?new Date(t.end).getTime():startTime;
+    const sIdx=Math.round((startTime-minTime)/dayMS);
+    const eIdx=Math.round((endTime-minTime)/dayMS);
 
-      // Header
-      const header=document.createElement('div');
-      header.className='timeline-grid timeline-header';
-      header.style.gridTemplateColumns=`repeat(${days},${cellW}px)`;
-      for(let i=0;i<days;i++){
-        const date=new Date(minTime+i*dayMS);
-        const cell=document.createElement('div');
-        cell.textContent=date.toISOString().slice(5,10); // MM-DD
-        header.appendChild(cell);
-      }
-      timeline.appendChild(header);
+    const bar=document.createElement('div');
+    bar.className='timeline-bar';
+    bar.style.gridColumnStart=sIdx+1;
+    bar.style.gridColumnEnd=eIdx+2;
+    bar.style.background=t.color||'#4f6df5';
+    bar.textContent=t.title;
+    row.appendChild(bar);
+    timeline.appendChild(row);
+  });
+}
 
-      // Rows
-      tasks.forEach((t)=>{
-        const row=document.createElement('div');
-        row.className='timeline-grid timeline-row';
-        row.style.gridTemplateColumns=`repeat(${days},${cellW}px)`;
+// ---------- 이벤트 ----------
+// 폼 제출
+taskForm.addEventListener('submit',e=>{
+  e.preventDefault();
+  const title=taskTitle.value.trim();
+  if(!title) return;
+  let start=taskStart.value,end=taskEnd.value;
+  if(start && end && new Date(end)<new Date(start)) [start,end]=[end,start];
+  tasks.push({title,start,end,done:false,color:taskColor.value});
+  taskTitle.value='';taskStart.value='';taskEnd.value='';
+  saveTasks();renderTasks();
+});
 
-        const startTime=t.start?new Date(t.start).getTime():minTime;
-        const endTime=t.end?new Date(t.end).getTime():startTime;
+// 체크박스, 삭제 버튼, 색상 수정
+taskList.addEventListener('change',e=>{
+  if(e.target.matches('input[type=checkbox]')){
+    const idx=e.target.dataset.index;tasks[idx].done=e.target.checked;saveTasks();renderTasks();
+  }else if(e.target.matches('.liColor')){
+    const idx=e.target.dataset.index;tasks[idx].color=e.target.value;saveTasks();renderTasks();
+  }
+});
 
-        const sIdx=Math.round((startTime-minTime)/dayMS);
-        const eIdx=Math.round((endTime-minTime)/dayMS);
+taskList.addEventListener('click',e=>{
+  if(e.target.matches('button.delete')){
+    const idx=e.target.dataset.index;tasks.splice(idx,1);saveTasks();renderTasks();}
+});
 
-        const bar=document.createElement('div');
-        bar.className='timeline-bar';
-        bar.style.gridColumnStart=sIdx+1;
-        bar.style.gridColumnEnd=eIdx+2; // inclusive
-        bar.textContent=t.title;
-        row.appendChild(bar);
-        timeline.appendChild(row);
-      });
-    }
-
-    // ---------- 이벤트 ----------
-    taskForm.addEventListener('submit',e=>{
-      e.preventDefault();
-      const title=taskTitle.value.trim();
-      if(!title) return;
-      let start=taskStart.value,end=taskEnd.value;
-      // swap if reversed
-      if(start && end && new Date(end)<new Date(start)) [start,end]=[end,start];
-      tasks.push({title,start,end,done:false});
-      taskTitle.value='';taskStart.value='';taskEnd.value='';
-      saveTasks();renderTasks();
-    });
-
-    taskList.addEventListener('change',e=>{
-      if(e.target.matches('input[type=checkbox]')){
-        const idx=e.target.dataset.index;tasks[idx].done=e.target.checked;saveTasks();renderTasks();}
-    });
-    taskList.addEventListener('click',e=>{
-      if(e.target.matches('button.delete')){
-        const idx=e.target.dataset.index;tasks.splice(idx,1);saveTasks();renderTasks();}
-    });
-
-    filterBtns.forEach(btn=>btn.addEventListener('click',()=>{
-      filterBtns.forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active');
-      currentFilter=btn.dataset.filter;renderTasks();
-    }));
-
-    // JSON Export
-    exportBtn.addEventListener('click',()=>{
-      const blob=new Blob([JSON.stringify(tasks,null,2)],{type:'application/json'});
-      const url=URL.createObjectURL(blob);
-      const a=document.createElement('a');
-      a.href=url;a.download='tasks.json';a.click();URL.revokeObjectURL(url);
-    });
-
-    // JSON Import
-    importFile.addEventListener('change',e=>{
-      const file=e.target.files[0];
-      if(!file) return;
-      const reader=new FileReader();
-      reader.onload=ev=>{
-        try{const data=JSON.parse(ev.target.result);if(Array.isArray(data)){tasks=data;saveTasks();renderTasks();}}
-        catch(err){alert('JSON 형식 오류');}
-      };
-      reader.readAsText(file);
-    });
-
-    renderTasks();
-  </script>
-</body>
-</html>
+// 필터 버튼
+filterBtns.forEach(btn=>btn.addEventListener('click',()=>{
+  filterBtns.forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  currentFilter=btn.dataset.filter;renderTasks();
+}));(btn=>btn.addEventListener('
