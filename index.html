@@ -92,157 +92,92 @@
 
 <script>
 /*****************
- * 초기 설정
+ * 스토리지 체크 (CodePen 보호모드 대비)
  *****************/
-// localStorage 사용 가능 여부 점검 (CodePen 등 sandbox 환경 대비)
-let storageOK = true;
-try{
-  localStorage.setItem('__test','1');
-  localStorage.removeItem('__test');
-}catch(e){ storageOK = false; }
+let storageOK=true;
+try{localStorage.setItem('__test','1');localStorage.removeItem('__test');}catch(e){storageOK=false;}
 
 /*****************
- * 엘리먼트 캐싱
+ * 요소 캐싱
  *****************/
-const taskForm   = document.getElementById('taskForm');
-const taskTitle  = document.getElementById('taskTitle');
-const taskStart  = document.getElementById('taskStart');
-const taskEnd    = document.getElementById('taskEnd');
-const taskColor  = document.getElementById('taskColor');
-const taskList   = document.getElementById('taskList');
-const filterBtns = document.querySelectorAll('.filters button');
-const timeline   = document.getElementById('timeline');
-const exportBtn  = document.getElementById('exportBtn');
-const importFile = document.getElementById('importFile');
-const toggleView = document.getElementById('toggleView');
+const \$ = id=>document.getElementById(id);
+const taskForm=\$("taskForm"), taskTitle=\$("taskTitle"), taskStart=\$("taskStart"), taskEnd=\$("taskEnd"), taskColor=\$("taskColor"), taskList=\$("taskList"), timeline=\$("timeline"), toggleView=\$("toggleView"), exportBtn=\$("exportBtn"), importFile=\$("importFile");
+const filterBtns=document.querySelectorAll('.filters button');
 
 /*****************
- * 전역 상태
+ * 상태
  *****************/
-let tasks = [];
+let tasks=[];
 if(storageOK){
-  try{ tasks = JSON.parse(localStorage.getItem('tasks')) || []; }catch{ tasks = []; }
+  try{tasks=JSON.parse(localStorage.getItem('tasks'))||[];}catch{tasks=[];}
 }
-let currentFilter = 'all';
-let monthMode     = false; // 월별 보기 토글
-
-function saveTasks(){
-  if(!storageOK) return;
-  try{ localStorage.setItem('tasks', JSON.stringify(tasks)); }catch{}
-}
+let currentFilter='all';
+let monthMode=false;
+function saveTasks(){if(!storageOK)return;localStorage.setItem('tasks',JSON.stringify(tasks));}
 
 /*****************
- * 렌더링 함수들
+ * 렌더링 - 리스트
  *****************/
 function renderTasks(){
   taskList.innerHTML='';
-  const filtered = tasks.filter(t=>{
-    if(currentFilter==='pending')   return !t.done;
-    if(currentFilter==='completed') return  t.done;
-    return true;
+  const filtered=tasks.filter(t=>currentFilter==='all'||(currentFilter==='pending'&&!t.done)||(currentFilter==='completed'&&t.done));
+  if(!filtered.length){taskList.innerHTML='<li style="text-align:center;color:#888;">태스크가 없습니다.</li>';}
+  filtered.sort((a,b)=>new Date(a.start||'9999-12-31')-new Date(b.start||'9999-12-31')).forEach(t=>{
+    const idx=tasks.indexOf(t);
+    const li=document.createElement('li');
+    li.className='task'+(t.done?' done':'');
+    li.innerHTML=`<label><span class="color-dot" style="background:${t.color}"></span><span>${t.title}</span></label>
+      <span class="dates">${t.start||''}${t.end?' → '+t.end:''}</span>
+      <input type="color" class="liColor" data-idx="${idx}" value="${t.color}">
+      <button class="action complete" data-idx="${idx}">${t.done?'↺':'✔'}</button>
+      <button class="action edit" data-idx="${idx}">✎</button>
+      <button class="action delete" data-idx="${idx}">✖</button>`;
+    taskList.appendChild(li);
   });
-  if(filtered.length===0){
-    taskList.innerHTML='<li style="text-align:center;color:#888;">태스크가 없습니다.</li>';
-  } else {
-    filtered
-      .sort((a,b)=> new Date(a.start||'9999-12-31') - new Date(b.start||'9999-12-31'))
-      .forEach(t=>{
-        const idx = tasks.indexOf(t);
-        const li = document.createElement('li');
-        li.className = 'task' + (t.done ? ' done' : '');
-        li.innerHTML = `
-          <label>
-            <span class="color-dot" style="background:${t.color}"></span>
-            <span>${t.title}</span>
-          </label>
-          <span class="dates">${t.start||''}${t.end?(' → '+t.end):''}</span>
-          <input type="color" class="liColor" data-index="${idx}" value="${t.color}" title="색상 변경">
-          <button class="action complete" data-index="${idx}" title="완료/되돌리기">${t.done?'↺':'✔'}</button>
-          <button class="action edit" data-index="${idx}" title="수정">✎</button>
-          <button class="action delete" data-index="${idx}" title="삭제">✖</button>
-        `;
-        taskList.appendChild(li);
-      });
-  }
   renderTimeline();
 }
 
+/*****************
+ * 렌더링 - 타임라인
+ *****************/
 function renderTimeline(){
   timeline.innerHTML='';
-  if(tasks.length===0){
-    timeline.innerHTML='<div style="text-align:center;padding:1rem;color:#888;">데이터가 없습니다.</div>';
-    return;
-  }
-  const dayMS = 86_400_000;
-  let minTime = Infinity, maxTime = -Infinity;
-  tasks.forEach(t=>{
-    const s = t.start ? new Date(t.start).getTime() : null;
-    const e = t.end   ? new Date(t.end  ).getTime() : null;
-    if(s!==null) minTime = Math.min(minTime, s);
-    if(e!==null) maxTime = Math.max(maxTime, e);
-    if(s===null && e!==null) minTime = Math.min(minTime, e);
-    if(e===null && s!==null) maxTime = Math.max(maxTime, s);
-  });
-  if(!isFinite(minTime)||!isFinite(maxTime)){
-    timeline.innerHTML='<div style="text-align:center;padding:1rem;color:#888;">시작·종료일 입력된 태스크가 없습니다.</div>';
-    return;
-  }
-  const days = Math.round((maxTime-minTime)/dayMS)+1;
-  const cellW = 70;
-
-  // ---- 월 헤더 (옵션) ----
-  if(monthMode){
-    const monthHeader = document.createElement('div');
-    monthHeader.className='timeline-grid timeline-month-header';
-    monthHeader.style.gridTemplateColumns=`repeat(${days},${cellW}px)`;
-    let cur = new Date(minTime); cur.setDate(1); cur.setHours(0,0,0,0);
-    while(cur.getTime()<=maxTime){
-      const monthStartIdx = Math.round((cur.getTime()-minTime)/dayMS);
-      const next = new Date(cur.getFullYear(), cur.getMonth()+1, 1);
-      const monthEndIdx = Math.min(days-1, Math.round((next.getTime()-1-minTime)/dayMS));
-      const cell=document.createElement('div');
-      cell.style.gridColumnStart=monthStartIdx+1;
-      cell.style.gridColumnEnd=monthEndIdx+2;
-      cell.textContent=`${cur.getFullYear()}-${String(cur.getMonth()+1).padStart(2,'0')}`;
-      monthHeader.appendChild(cell);
-      cur=next;
-    }
-    timeline.appendChild(monthHeader);
-  }
-
-  // ---- 일 헤더 ----
-  const dayHeader=document.createElement('div');
-  dayHeader.className='timeline-grid timeline-day-header';
-  dayHeader.style.gridTemplateColumns=`repeat(${days},${cellW}px)`;
-  for(let i=0;i<days;i++){
-    const date=new Date(minTime+i*dayMS);
-    const cell=document.createElement('div');
-    cell.textContent=date.toISOString().slice(5,10);
-    dayHeader.appendChild(cell);
-  }
-  timeline.appendChild(dayHeader);
-
-  // ---- 태스크 바 ----
-  tasks.forEach(t=>{
-    const row=document.createElement('div');
-    row.className='timeline-grid timeline-row';
-    row.style.gridTemplateColumns=`repeat(${days},${cellW}px)`;
-    const startTime = t.start ? new Date(t.start).getTime() : minTime;
-    const endTime   = t.end   ? new Date(t.end  ).getTime() : startTime;
-    const sIdx = Math.round((startTime-minTime)/dayMS);
-    const eIdx = Math.round((endTime  -minTime)/dayMS);
-    const bar=document.createElement('div');
-    bar.className='timeline-bar';
-    bar.style.gridColumnStart=sIdx+1;
-    bar.style.gridColumnEnd  =eIdx+2;
-    bar.style.background=t.color;
-    bar.textContent=t.title;
-    row.appendChild(bar);
-    timeline.appendChild(row);
-  });
+  if(!tasks.length){timeline.innerHTML='<div style="text-align:center;padding:1rem;color:#888;">데이터가 없습니다.</div>';return;}
+  const dayMS=86400000;
+  let min=Infinity,max=-Infinity;
+  tasks.forEach(t=>{const s=t.start?new Date(t.start).getTime():null;const e=t.end?new Date(t.end).getTime():null;if(s!==null)min=Math.min(min,s);if(e!==null)max=Math.max(max,e);if(s===null&&e!==null)min=Math.min(min,e);if(e===null&&s!==null)max=Math.max(max,s);});
+  if(!isFinite(min)||!isFinite(max)){timeline.innerHTML='<div style="text-align:center;padding:1rem;color:#888;">시작·종료일 입력된 태스크가 없습니다.</div>';return;}
+  const days=Math.round((max-min)/dayMS)+1, cellW=70;
+  if(monthMode){const mh=document.createElement('div');mh.className='timeline-grid timeline-month-header';mh.style.gridTemplateColumns=`repeat(${days},${cellW}px)`;let cur=new Date(min);cur.setDate(1);while(cur.getTime()<=max){const startIdx=Math.round((cur-min)/dayMS);const next=new Date(cur.getFullYear(),cur.getMonth()+1,1);const endIdx=Math.min(days-1,Math.round((next.getTime()-1-min)/dayMS));const cell=document.createElement('div');cell.style.gridColumnStart=startIdx+1;cell.style.gridColumnEnd=endIdx+2;cell.textContent=`${cur.getFullYear()}-${String(cur.getMonth()+1).padStart(2,'0')}`;mh.appendChild(cell);cur=next;}timeline.appendChild(mh);}  
+  const dh=document.createElement('div');dh.className='timeline-grid timeline-day-header';dh.style.gridTemplateColumns=`repeat(${days},${cellW}px)`;for(let i=0;i<days;i++){const d=new Date(min+i*dayMS);const cell=document.createElement('div');cell.textContent=d.toISOString().slice(5,10);dh.appendChild(cell);}timeline.appendChild(dh);
+  tasks.forEach(t=>{const row=document.createElement('div');row.className='timeline-grid timeline-row';row.style.gridTemplateColumns=`repeat(${days},${cellW}px)`;const s=t.start?new Date(t.start).getTime():min;const e=t.end?new Date(t.end).getTime():s;const sIdx=Math.round((s-min)/dayMS);const eIdx=Math.round((e-min)/dayMS);const bar=document.createElement('div');bar.className='timeline-bar';bar.style.background=t.color;bar.style.gridColumnStart=sIdx+1;bar.style.gridColumnEnd=eIdx+2;bar.textContent=t.title;row.appendChild(bar);timeline.appendChild(row);});
 }
 
 /*****************
- * 이벤트 핸들러
+ * 이벤트: 폼 제출
  *****************/
-// 태스크 추가
+taskForm.addEventListener('submit',e=>{
+  e.preventDefault();
+  const title=taskTitle.value.trim();if(!title){alert('제목을 입력하세요');return;}
+  let start=taskStart.value,end=taskEnd.value;if(start&&end&&new Date(end)<new Date(start))[start,end]=[end,start];
+  tasks.push({title,start,startLabel:start,end,endLabel:end,done:false,color:taskColor.value});
+  taskTitle.value='';taskStart.value='';taskEnd.value='';
+  saveTasks();renderTasks();
+});
+
+/*****************
+ * 이벤트: 리스트 내부 (위임)
+ *****************/
+taskList.addEventListener('click',e=>{
+  const idx=e.target.dataset.idx;if(idx===undefined)return;
+  if(e.target.classList.contains('delete')){tasks.splice(idx,1);saveTasks();renderTasks();return;}
+  if(e.target.classList.contains('complete')){tasks[idx].done=!tasks[idx].done;saveTasks();renderTasks();return;}
+  if(e.target.classList.contains('edit')){const nt=prompt('새 제목을 입력하세요',tasks[idx].title);if(nt){tasks[idx].title=nt.trim();saveTasks();renderTasks();}return;}
+});
+
+taskList.addEventListener('change',e=>{if(e.target.classList.contains('liColor')){const idx=e.target.dataset.idx;tasks[idx].color=e.target.value;saveTasks();renderTasks();}});
+
+/*****************
+ * 기타 버튼
+ *****************/
+filterBtns.forEach(btn=>btn.addEventListener('click',()=>{filterBtns.forEach(b=>b.classList.remove('active'));btn.classList.add('active');currentFilter=btn.dataset.filter;renderTasks();}));(btn=>btn.addEventListener('click',()=>{filterBtns.forEach(b=>b.classList.remove('
